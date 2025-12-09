@@ -167,6 +167,26 @@ services:
       redis:
         condition: service_healthy
 
+  # Flower - Celery Monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.web
+    container_name: etl-flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=amqp://admin:password@rabbitmq:5672/
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    command: celery -A src.worker.celery flower --port=5555
+    networks:
+      - etl-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 networks:
   etl-network:
     driver: bridge
