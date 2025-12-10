@@ -1,11 +1,13 @@
 """
 Data source and destination type definitions for the ETL pipeline.
 """
+
 from enum import Enum
 
 
 class SourceType(Enum):
     """Supported data source types"""
+
     MONGODB = "mongodb"
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
@@ -15,6 +17,7 @@ class SourceType(Enum):
 
 class DestinationType(Enum):
     """Supported data destination types"""
+
     MONGODB = "mongodb"
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"

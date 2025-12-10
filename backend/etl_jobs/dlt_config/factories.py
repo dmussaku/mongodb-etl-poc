@@ -1,6 +1,7 @@
 """
 Factory functions and registry for data sources and destinations.
 """
+
 from typing import Dict, Any
 from .types import SourceType, DestinationType
 
@@ -8,7 +9,7 @@ from .types import SourceType, DestinationType
 def _get_mongodb_source(config: Dict[str, Any]) -> Any:
     """Configure MongoDB source"""
     from .mongodb.source import mongodb_collection
-    
+
     return mongodb_collection(
         connection_url=config["connection_url"],
         database=config["database"],
@@ -22,7 +23,7 @@ def _get_mongodb_source(config: Dict[str, Any]) -> Any:
 def _get_mongodb_destination(config: Dict[str, Any]) -> Any:
     """Configure MongoDB destination"""
     from .mongodb.destination import mongo_sink
-    
+
     return mongo_sink(
         connection_url=config["connection_url"],
         database=config["database"],

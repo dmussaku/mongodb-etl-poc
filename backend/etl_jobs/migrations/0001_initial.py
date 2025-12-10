@@ -8,55 +8,139 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Pipeline',
+            name="Pipeline",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255, unique=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('source_uri', models.TextField()),
-                ('source_table', models.CharField(max_length=255)),
-                ('destination_uri', models.TextField()),
-                ('destination_table', models.CharField(max_length=255)),
-                ('load_type', models.CharField(choices=[('full', 'Full Load'), ('incremental', 'Incremental')], default='full', max_length=50)),
-                ('incremental_strategy', models.CharField(blank=True, choices=[('append', 'Append'), ('merge', 'Merge'), ('replace', 'Replace'), ('upsert', 'Upsert')], max_length=50, null=True)),
-                ('incremental_key', models.CharField(blank=True, max_length=255, null=True)),
-                ('primary_key', models.CharField(blank=True, max_length=255, null=True)),
-                ('masking_config', models.JSONField(blank=True, default=dict, help_text='Masking rules as key-value pairs')),
-                ('frequency', models.CharField(blank=True, help_text="Cron expression (e.g., '0 2 * * *')", max_length=255, null=True)),
-                ('is_enabled', models.BooleanField(default=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, unique=True)),
+                ("description", models.TextField(blank=True, null=True)),
+                ("source_uri", models.TextField()),
+                ("source_table", models.CharField(max_length=255)),
+                ("destination_uri", models.TextField()),
+                ("destination_table", models.CharField(max_length=255)),
+                (
+                    "load_type",
+                    models.CharField(
+                        choices=[("full", "Full Load"), ("incremental", "Incremental")],
+                        default="full",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "incremental_strategy",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("append", "Append"),
+                            ("merge", "Merge"),
+                            ("replace", "Replace"),
+                            ("upsert", "Upsert"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "incremental_key",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "primary_key",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "masking_config",
+                    models.JSONField(
+                        blank=True,
+                        default=dict,
+                        help_text="Masking rules as key-value pairs",
+                    ),
+                ),
+                (
+                    "frequency",
+                    models.CharField(
+                        blank=True,
+                        help_text="Cron expression (e.g., '0 2 * * *')",
+                        max_length=255,
+                        null=True,
+                    ),
+                ),
+                ("is_enabled", models.BooleanField(default=True)),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='JobExecution',
+            name="JobExecution",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('running', 'Running'), ('success', 'Success'), ('failed', 'Failed'), ('cancelled', 'Cancelled')], default='pending', max_length=50)),
-                ('started_at', models.DateTimeField(blank=True, null=True)),
-                ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('duration_seconds', models.DecimalField(blank=True, decimal_places=2, max_digits=20, null=True)),
-                ('rows_processed', models.BigIntegerField(blank=True, null=True)),
-                ('rows_inserted', models.BigIntegerField(blank=True, null=True)),
-                ('rows_updated', models.BigIntegerField(blank=True, null=True)),
-                ('rows_failed', models.BigIntegerField(blank=True, null=True)),
-                ('logs', models.TextField(blank=True, null=True)),
-                ('error_message', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('execution_id', models.CharField(blank=True, max_length=255, null=True)),
-                ('pipeline', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='executions', to='etl_jobs.pipeline')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("running", "Running"),
+                            ("success", "Success"),
+                            ("failed", "Failed"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="pending",
+                        max_length=50,
+                    ),
+                ),
+                ("started_at", models.DateTimeField(blank=True, null=True)),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "duration_seconds",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=20, null=True
+                    ),
+                ),
+                ("rows_processed", models.BigIntegerField(blank=True, null=True)),
+                ("rows_inserted", models.BigIntegerField(blank=True, null=True)),
+                ("rows_updated", models.BigIntegerField(blank=True, null=True)),
+                ("rows_failed", models.BigIntegerField(blank=True, null=True)),
+                ("logs", models.TextField(blank=True, null=True)),
+                ("error_message", models.TextField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "execution_id",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "pipeline",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="executions",
+                        to="etl_jobs.pipeline",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]
