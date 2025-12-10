@@ -122,4 +122,7 @@ def run_pipeline(
     )
 
     load_info = pipeline.run(source_data)
+    logger.info(f"Load info type: {type(load_info)}")
+    logger.info(f"Load info attributes: {dir(load_info)}")
+    logger.info(f"Load info string representation: {str(load_info)}")
     return load_info

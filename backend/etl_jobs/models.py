@@ -71,6 +71,33 @@ class Pipeline(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+    def get_source_config(self):
+        """Build source configuration for this pipeline"""
+        config = {
+            "type": "mongodb",
+            "connection_url": self.source_uri,
+            "database": self.source_database,
+            "collection": self.source_table,
+            "aggregation_pipeline": self.source_aggregation_query,
+        }
+        
+        # Add incremental configuration if applicable
+        if self.load_type == "incremental" and self.incremental_key:
+            config["incremental_key"] = self.incremental_key
+            if self.incremental_strategy:
+                config["incremental_strategy"] = self.incremental_strategy
+        
+        return config
+    
+    def get_destination_config(self):
+        """Build destination configuration for this pipeline"""
+        return {
+            "type": "mongodb",
+            "connection_url": self.destination_uri,
+            "database": self.destination_database,
+            "collection": self.destination_table
+        }
+
 
 class JobExecution(models.Model):
     """Tracks each pipeline execution."""
@@ -114,3 +141,45 @@ class JobExecution(models.Model):
 
     def __str__(self):
         return f"{self.pipeline.name} - {self.status} ({self.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
+
+    def start_execution(self):
+        """Mark execution as started"""
+        from django.utils import timezone
+        import uuid
+        
+        self.status = "running"
+        self.started_at = timezone.now()
+        self.execution_id = str(uuid.uuid4())
+        self.save()
+    
+    def complete_success(self, load_info):
+        """Mark execution as successfully completed"""
+        from django.utils import timezone
+        from decimal import Decimal
+        
+        self.status = "success"
+        self.completed_at = timezone.now()
+        self._update_duration()
+    
+    
+        self.logs = f"Pipeline executed successfully. Load Info: {str(load_info)}"
+        self.save()
+    
+    def complete_failure(self, error_message):
+        """Mark execution as failed"""
+        from django.utils import timezone
+        
+        self.status = "failed"
+        self.completed_at = timezone.now()
+        self._update_duration()
+        self.error_message = error_message
+        self.logs = f"Pipeline execution failed with error: {error_message}"
+        self.save()
+    
+    def _update_duration(self):
+        """Calculate and update duration"""
+        from decimal import Decimal
+        
+        if self.started_at and self.completed_at:
+            duration = (self.completed_at - self.started_at).total_seconds()
+            self.duration_seconds = Decimal(str(duration))
