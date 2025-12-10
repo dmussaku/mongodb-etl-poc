@@ -5,6 +5,7 @@ redis
 flower
 python-decouple
 django-celery-results
+django-celery-beat
 ipython
 django-extensions
 gunicorn

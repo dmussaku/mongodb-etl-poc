@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'etl_jobs',
     'django_celery_results',
+    'django_celery_beat',
     'django_extensions',
 ]
 
@@ -107,3 +108,18 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Celery Beat Schedule Configuration
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULE = {
+    # Example: Run a task every 30 seconds
+    # 'sample-task': {
+    #     'task': 'etl_jobs.tasks.sample_task',
+    #     'schedule': 30.0,  # seconds
+    # },
+    # Example: Run a task daily at 2:30 AM
+    # 'daily-etl-job': {
+    #     'task': 'etl_jobs.tasks.daily_etl_job',
+    #     'schedule': crontab(hour=2, minute=30),
+    # },
+}
