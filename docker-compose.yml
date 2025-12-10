@@ -33,27 +33,7 @@ services:
       timeout: 10s
       retries: 5
 
-  # Message Broker - RabbitMQ
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - etl-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Cache/Result Backend - Redis
+  # Message Broker & Result Backend - Redis
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -78,8 +58,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
@@ -90,8 +68,9 @@ services:
       - DB_PASSWORD=password
       - DB_HOST=postgres
       - DB_PORT=5432
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     networks:
@@ -100,6 +79,19 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
              python manage.py runserver 0.0.0.0:8000"
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+            - "*.pyo"
+            - "*.pyd"
+            - ".git/"
+            - ".pytest_cache/"
+            - "node_modules/"
 
   # Celery Worker
   celery-worker:
@@ -107,7 +99,6 @@ services:
     container_name: celery-worker
     depends_on:
       - postgres
-      - rabbitmq
       - redis
     environment:
       - DEBUG=True
@@ -117,13 +108,27 @@ services:
       - DB_PASSWORD=password
       - DB_HOST=postgres
       - DB_PORT=5432
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     networks:
       - etl-network
-    command: celery -A myproject worker --loglevel=info
+    command: celery -A myproject worker --loglevel=info --reload
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+            - "*.pyo"
+            - "*.pyd"
+            - ".git/"
+            - ".pytest_cache/"
+            - "node_modules/"
 
   # Celery Flower - Task Monitoring
   celery-flower:
@@ -132,7 +137,6 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      - rabbitmq
       - redis
     environment:
       - DEBUG=True
@@ -142,13 +146,27 @@ services:
       - DB_PASSWORD=password
       - DB_HOST=postgres
       - DB_PORT=5432
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     networks:
       - etl-network
     command: celery -A myproject flower --port=5555
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+            - "*.pyo"
+            - "*.pyd"
+            - ".git/"
+            - ".pytest_cache/"
+            - "node_modules/"
 
 networks:
   etl-network:
@@ -157,5 +175,4 @@ networks:
 volumes:
   mongodb_data:
   postgres_data:
-  rabbitmq_data:
   redis_data:

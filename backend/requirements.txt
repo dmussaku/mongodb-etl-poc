@@ -5,3 +5,4 @@ redis==5.0.1
 flower==2.0.1
 python-decouple==3.8
 gunicorn==21.2.0
+watchdog==3.0.0
