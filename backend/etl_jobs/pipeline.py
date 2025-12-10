@@ -1,4 +1,5 @@
 import dlt
+import logging
 from typing import Dict, Any
 from .dlt_config import (
     SourceType,
@@ -6,6 +7,8 @@ from .dlt_config import (
     get_source_factory,
     get_destination_factory,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def run_pipeline(
@@ -62,6 +65,8 @@ def run_pipeline(
     Raises:
         ValueError: If source or destination type is not supported
     """
+    logger.info(f"Starting pipeline '{pipeline_name}' with source_config: {source_config}, destination_config: {destination_config}, dev_mode: {dev_mode}")
+    
     # Validate and get source type
     source_type_str = source_config.get("type")
     if not source_type_str:

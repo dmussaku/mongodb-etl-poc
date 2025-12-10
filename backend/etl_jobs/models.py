@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 
 class Pipeline(models.Model):
@@ -21,10 +22,18 @@ class Pipeline(models.Model):
 
     # Source Configuration
     source_uri = models.TextField()
+    source_database = models.CharField(max_length=255, blank=True, null=True)
     source_table = models.CharField(max_length=255)
+    source_aggregation_query = ArrayField(
+        base_field=models.JSONField(),
+        blank=True,
+        null=True,
+        help_text="Aggregation pipeline as a list of MongoDB aggregation stages",
+    )
 
     # Destination Configuration
     destination_uri = models.TextField()
+    destination_database= models.CharField(max_length=255, blank=True, null=True)
     destination_table = models.CharField(max_length=255)
 
     # Load Configuration

@@ -11,4 +11,4 @@ django-extensions
 gunicorn
 watchdog
 pymongo
-dlt
+dlt[mongodb,postgres]
