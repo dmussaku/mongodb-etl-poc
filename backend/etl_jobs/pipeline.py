@@ -2,49 +2,111 @@
 
 
 import dlt
-from .dlt_config.mongodb.destination import mongo_sink
-from .dlt_config.mongodb.source import mongodb_collection
+from typing import Dict, Any
+from .dlt_config import SourceType, DestinationType, get_source_factory, get_destination_factory
 
 
-def main():
-    # ----- configure SOURCE -----
-    SRC_URI = "mongodb://root:password@localhost:27017"
-    SRC_DB = "university"
-    SRC_COLLECTION = "people"
-
-    # Aggregation pipeline to limit 10 documents
-    aggregation_pipeline = [{"$limit": 100}]
-
-    source_data = mongodb_collection(
-        connection_url=SRC_URI,
-        database=SRC_DB,
-        collection=SRC_COLLECTION,
-        aggregation_pipeline=aggregation_pipeline,
-        write_disposition="replace",   # affects how dlt *conceptually* handles table
-    )
-
-    # ----- configure DESTINATION -----
-    DEST_URI = "mongodb://root:password@localhost:27017"
-    DEST_DB = "analytics"
-    DEST_COLLECTION = "people_100"
-
-    # You can parametrize the destination by calling it with kwargs
-    dest = mongo_sink(
-        connection_url=DEST_URI,
-        database=DEST_DB,
-        collection=DEST_COLLECTION,
-    )
-
+def run_pipeline(
+    source_config: Dict[str, Any],
+    destination_config: Dict[str, Any],
+    pipeline_name: str = "etl_pipeline",
+    dev_mode: bool = True
+):
+    """
+    Run an extensible ETL pipeline supporting multiple sources and destinations.
+    
+    Args:
+        source_config: Source configuration dictionary with 'type' and type-specific parameters
+        destination_config: Destination configuration dictionary with 'type' and type-specific parameters
+        pipeline_name: Name of the DLT pipeline
+        dev_mode: Whether to run in development mode
+    
+    Source Config Examples:
+        MongoDB: {
+            "type": "mongodb",
+            "connection_url": "mongodb://user:pass@host:port",
+            "database": "db_name",
+            "collection": "collection_name",
+            "aggregation_pipeline": [{"$limit": 100}],  # optional
+            "query": {"field": "value"},  # optional, ignored if aggregation_pipeline provided
+            "write_disposition": "replace"  # optional
+        }
+        
+        Future PostgreSQL: {
+            "type": "postgresql",
+            "connection_url": "postgresql://user:pass@host:port/db",
+            "table": "table_name",
+            "query": "SELECT * FROM table WHERE condition"
+        }
+    
+    Destination Config Examples:
+        MongoDB: {
+            "type": "mongodb",
+            "connection_url": "mongodb://user:pass@host:port",
+            "database": "db_name",
+            "collection": "collection_name"
+        }
+        
+        Future S3: {
+            "type": "s3",
+            "bucket": "bucket_name",
+            "path": "data/output/",
+            "format": "parquet"
+        }
+    
+    Returns:
+        Load info from DLT pipeline execution
+        
+    Raises:
+        ValueError: If source or destination type is not supported
+    """
+    # Validate and get source type
+    source_type_str = source_config.get("type")
+    if not source_type_str:
+        raise ValueError("Source config must include 'type' field")
+    
+    try:
+        source_type = SourceType(source_type_str)
+    except ValueError:
+        supported_sources = [t.value for t in SourceType]
+        raise ValueError(f"Unsupported source type '{source_type_str}'. Supported: {supported_sources}")
+    
+    # Validate and get destination type
+    dest_type_str = destination_config.get("type")
+    if not dest_type_str:
+        raise ValueError("Destination config must include 'type' field")
+    
+    try:
+        dest_type = DestinationType(dest_type_str)
+    except ValueError:
+        supported_destinations = [t.value for t in DestinationType]
+        raise ValueError(f"Unsupported destination type '{dest_type_str}'. Supported: {supported_destinations}")
+    
+    # Get source factory and create source
+    try:
+        source_factory = get_source_factory(source_type)
+        source_data = source_factory(source_config)
+    except ValueError as e:
+        raise ValueError(f"Source error: {e}")
+    except NotImplementedError as e:
+        raise ValueError(f"Source type '{source_type.value}' not implemented yet: {e}")
+    
+    # Get destination factory and create destination
+    try:
+        dest_factory = get_destination_factory(dest_type)
+        destination = dest_factory(destination_config)
+    except ValueError as e:
+        raise ValueError(f"Destination error: {e}")
+    except NotImplementedError as e:
+        raise ValueError(f"Destination type '{dest_type.value}' not implemented yet: {e}")
+    
+    # Create and run pipeline
     pipeline = dlt.pipeline(
-        pipeline_name="university_people_etl",
-        destination=dest,       # custom destination instance
-        dataset_name="ignored", # not used by our custom sink
-        dev_mode=True,
+        pipeline_name=pipeline_name,
+        destination=destination,
+        dataset_name="ignored",  # may be used by some destinations
+        dev_mode=dev_mode,
     )
 
     load_info = pipeline.run(source_data)
-    print(load_info)
-
-
-if __name__ == "__main__":
-    main()
+    return load_info
