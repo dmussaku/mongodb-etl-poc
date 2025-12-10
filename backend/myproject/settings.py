@@ -21,6 +21,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'etl_jobs',
+    'django_celery_results',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
